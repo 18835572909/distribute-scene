@@ -5,6 +5,7 @@ import com.rhb.api.pojo.RedPacketDetail;
 import com.rhb.api.pojo.RedPacketRecord;
 import com.rhb.api.pojo.RedPacketRob;
 import com.rhb.red.common.RedGenerateUtils;
+import com.rhb.red.common.RedisLock;
 import com.rhb.red.mapper.RedDetailMapper;
 import com.rhb.red.mapper.RedRecordMapper;
 import com.rhb.red.mapper.RedRobMapper;
@@ -32,6 +33,8 @@ public class RedServiceImpl implements RedService {
     RedisTemplate redisTemplate;
     @Autowired
     RedBaseService baseService;
+    @Autowired
+    RedisLock redisLock;
 
     private static final String redis_prefix = "red:";
 
@@ -93,24 +96,29 @@ public class RedServiceImpl implements RedService {
         String redCountKey = redId + ":totalCount";
         Integer count = (Integer) redisTemplate.opsForValue().get(redCountKey);
         if(count>0){
-            //校验红包金额
-            Integer restAmount = (Integer) redisTemplate.opsForList().rightPop(redId);
-            if(restAmount!=null){
-                redisTemplate.opsForValue().set(useRobKey,1);
-                redisTemplate.opsForValue().increment(redCountKey,-1);
+            if(redisLock.lock(this.getClass().getName(),redId)) {
+                //校验红包金额
+                Integer restAmount = (Integer) redisTemplate.opsForList().rightPop(redId);
+                if (restAmount != null) {
+                    redisTemplate.opsForValue().set(useRobKey, 1);
+                    redisTemplate.opsForValue().increment(redCountKey, -1);
 
-                RedPacketRob rob = new RedPacketRob();
-                rob.setIsActive(true);
-                rob.setOptime(new Date());
-                rob.setRedAmount(new BigDecimal(restAmount));
-                rob.setUserId(userId);
-                rob.setRedId(redId);
-                baseService.saveRobRed(rob);
+                    RedPacketRob rob = new RedPacketRob();
+                    rob.setIsActive(true);
+                    rob.setOptime(new Date());
+                    rob.setRedAmount(new BigDecimal(restAmount));
+                    rob.setUserId(userId);
+                    rob.setRedId(redId);
+                    baseService.saveRobRed(rob);
 
-                Map<String,Integer> restMap = new HashMap<>();
-                restMap.put("money",restAmount);
-                System.out.println("rob-service:user:"+userId+",amount:"+restAmount);
-                return APIResponse.instance(restMap);
+                    Map<String, Integer> restMap = new HashMap<>();
+                    restMap.put("money", restAmount);
+
+                    redisLock.unLock(this.getClass().getName(),redId);
+                    System.out.println("rob-service:user:" + userId + ",amount:" + restAmount);
+                    return APIResponse.instance(restMap);
+                }
+
             }
         }
         return APIResponse.instance(1,"红包抢完了");

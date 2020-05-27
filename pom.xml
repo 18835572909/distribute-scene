@@ -37,6 +37,7 @@
         <lombok.version>1.18.10</lombok.version>
         <hutool.version>5.2.5</hutool.version>
         <redis.version>2.0.4.RELEASE</redis.version>
+        <jedis.version>3.0.1</jedis.version>
     </properties>
 
     <parent>
@@ -156,6 +157,11 @@
                 <groupId>cn.hutool</groupId>
                 <artifactId>hutool-all</artifactId>
                 <version>${hutool.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>redis.clients</groupId>
+                <artifactId>jedis</artifactId>
+                <version>${jedis.version}</version>
             </dependency>
         </dependencies>
     </dependencyManagement>

@@ -44,6 +44,7 @@ public class RedBaseServiceImpl implements RedBaseService {
     @Async
     @Override
     public void saveRobRed(RedPacketRob rob) {
+        System.out.println("DB："+Thread.currentThread().getName());
         robMapper.insertSelective(rob);
     }
 }

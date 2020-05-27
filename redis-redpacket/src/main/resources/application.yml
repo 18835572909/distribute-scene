@@ -6,6 +6,7 @@ spring:
     host: 192.168.1.102
     port: 6379
     password: root
+    timeout: 5000
     jedis:
       pool:
         max-active: 8
@@ -13,11 +14,13 @@ spring:
         max-idle: 500
         min-idle: 0
     lettuce:
-      shutdown-timeout: 0
+      shutdown-timeout: 5000
   datasource:
     password: root@123
     username: root
     url: jdbc:mysql://123.207.210.172:3306/soa?characterEncoding=UTF-8&autoReconnect=true&failOverReadOnly=false&useSSL=false
+    hikari:
+      connection-timeout: 50000
 
 mybatis:
   mapper-locations: classpath:mapper/*Mapper.xml
