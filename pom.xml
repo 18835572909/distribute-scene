@@ -38,6 +38,8 @@
         <hutool.version>5.2.5</hutool.version>
         <redis.version>2.0.4.RELEASE</redis.version>
         <jedis.version>3.0.1</jedis.version>
+        <zookeeper.version>3.4.10</zookeeper.version>
+        <curator.version>4.2.0</curator.version>
     </properties>
 
     <parent>
@@ -163,6 +165,24 @@
                 <artifactId>jedis</artifactId>
                 <version>${jedis.version}</version>
             </dependency>
+
+            <!-- curator:zk客户端 -->
+            <dependency>
+                <groupId>org.apache.curator</groupId>
+                <artifactId>curator-framework</artifactId>
+                <version>${curator.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.curator</groupId>
+                <artifactId>curator-recipes</artifactId>
+                <version>${curator.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.zookeeper</groupId>
+                <artifactId>zookeeper</artifactId>
+                <version>${zookeeper.version}</version>
+            </dependency>
+
         </dependencies>
     </dependencyManagement>
 
