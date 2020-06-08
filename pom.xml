@@ -38,7 +38,7 @@
         <hutool.version>5.2.5</hutool.version>
         <redis.version>2.0.4.RELEASE</redis.version>
         <jedis.version>3.0.1</jedis.version>
-        <zookeeper.version>3.4.10</zookeeper.version>
+        <zookeeper.version>3.4.14</zookeeper.version>
         <curator.version>4.2.0</curator.version>
     </properties>
 
