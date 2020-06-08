@@ -24,6 +24,11 @@ public interface RedService {
      */
     APIResponse robRed(String redId, Long userId);
 
+    /**
+     * zk-lock
+     */
+    APIResponse robRedZkLock(String redId, Long userId);
+
 
 
 }

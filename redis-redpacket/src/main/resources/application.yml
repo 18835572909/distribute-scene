@@ -6,7 +6,7 @@ spring:
     host: 192.168.1.102
     port: 6379
     password: root
-    timeout: 5000
+    timeout: 5000000
     jedis:
       pool:
         max-active: 8
@@ -32,3 +32,18 @@ mapper:
 logging:
   level:
     root: info
+
+
+curator:
+  #重试次数
+  retryCount: 5
+  #重试间隔时间
+  elapsedTimeMs: 1000
+  # zookeeper 地址
+  connectString: 192.168.1.102:2181
+  # session超时时间
+  sessionTimeoutMs: 60000
+  # 连接超时时间
+  connectionTimeoutMs: 5000
+  # 节点名称
+  namespace: distributed-lock

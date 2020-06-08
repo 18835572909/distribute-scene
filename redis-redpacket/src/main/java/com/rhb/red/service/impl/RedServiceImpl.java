@@ -11,6 +11,8 @@ import com.rhb.red.mapper.RedRecordMapper;
 import com.rhb.red.mapper.RedRobMapper;
 import com.rhb.red.service.RedBaseService;
 import com.rhb.red.service.RedService;
+import org.apache.curator.framework.CuratorFramework;
+import org.apache.curator.framework.recipes.locks.InterProcessMutex;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.scheduling.annotation.Async;
@@ -19,6 +21,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 
 /**
  * @author: rhb
@@ -35,6 +38,8 @@ public class RedServiceImpl implements RedService {
     RedBaseService baseService;
     @Autowired
     RedisLock redisLock;
+    @Autowired
+    CuratorFramework curatorFramework;
 
     private static final String redis_prefix = "red:";
 
@@ -95,6 +100,7 @@ public class RedServiceImpl implements RedService {
         //校验红包个数 : 抢红包
         String redCountKey = redId + ":totalCount";
         Integer count = (Integer) redisTemplate.opsForValue().get(redCountKey);
+        if(count==null || count ==0) return APIResponse.instance(1,"红包强完了");
         if(count>0){
             if(redisLock.lock(this.getClass().getName(),redId)) {
                 //校验红包金额
@@ -124,4 +130,54 @@ public class RedServiceImpl implements RedService {
         return APIResponse.instance(1,"红包抢完了");
     }
 
+    @Override
+    public APIResponse robRedZkLock(String redId, Long userId) {
+        //校验用户是否已经抢
+        String useRobKey = redId + ":rob:" + userId;
+        Object o = redisTemplate.opsForValue().get(useRobKey);
+        if(o!=null){
+            return APIResponse.instance(1,"您已经抢过红包");
+        }
+
+        //校验红包个数 : 抢红包
+        String redCountKey = redId + ":totalCount";
+        Integer count = (Integer) redisTemplate.opsForValue().get(redCountKey);
+        if(count>0){
+            InterProcessMutex mutex = new InterProcessMutex(curatorFramework,"/zkLock/"+redId+"/"+userId);
+            try {
+                if(mutex.acquire(10l,TimeUnit.SECONDS)) {
+                    //校验红包金额
+                    Integer restAmount = (Integer) redisTemplate.opsForList().rightPop(redId);
+                    if (restAmount != null) {
+                        redisTemplate.opsForValue().set(useRobKey, 1);
+                        redisTemplate.opsForValue().increment(redCountKey, -1);
+
+                        RedPacketRob rob = new RedPacketRob();
+                        rob.setIsActive(true);
+                        rob.setOptime(new Date());
+                        rob.setRedAmount(new BigDecimal(restAmount));
+                        rob.setUserId(userId);
+                        rob.setRedId(redId);
+                        baseService.saveRobRed(rob);
+
+                        Map<String, Integer> restMap = new HashMap<>();
+                        restMap.put("money", restAmount);
+
+                        redisLock.unLock(this.getClass().getName(),redId);
+                        System.out.println("rob-service:user:" + userId + ",amount:" + restAmount);
+                        return APIResponse.instance(restMap);
+                    }
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }finally {
+                try {
+                    mutex.release();
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+        return APIResponse.instance(1,"红包抢完了");
+    }
 }

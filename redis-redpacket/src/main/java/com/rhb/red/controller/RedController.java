@@ -39,4 +39,12 @@ public class RedController {
         return redService.robRed(redId, userId);
     }
 
+    /**
+     * 抢红包
+     */
+    @RequestMapping("rob2")
+    APIResponse robRedZkLock(String redId, Long userId){
+        return redService.robRedZkLock(redId, userId);
+    }
+
 }
